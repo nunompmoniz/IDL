@@ -58,6 +58,24 @@ ove.perc <- function(range = c(1, 4), trans = NULL) {
 
 #################
 
+#' Vector implementation of the SERA measure
+#'
+#' @param truth
+#' @param estimate
+#' @param ph
+#' @param na_rm
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' data("solubility_test")
+#' sera_vec(
+#' truth = solubility_test$solubility,
+#' estimate = solubility_test$prediction,
+#' ph = IRon::phi.control(solubility_test$solubility)
+#' )
 sera_vec <- function(truth, estimate, ph, na_rm = TRUE, ...) {
 
   sera_impl <- function(truth, estimate, ph) {
@@ -76,17 +94,11 @@ sera_vec <- function(truth, estimate, ph, na_rm = TRUE, ...) {
 
 }
 
-data("solubility_test")
-sera_vec(
-  truth = solubility_test$solubility,
-  estimate = solubility_test$prediction,
-  ph = IRon::phi.control(solubility_test$solubility)
-)
-
 sera <- function(data, ...) {
   UseMethod("sera")
 }
 
+library(tidymodels)
 sera <- new_numeric_metric(sera, direction = "minimize")
 
 sera.data.frame <- function(data, truth, estimate, ph, na_rm = TRUE, ...) {
@@ -105,13 +117,13 @@ sera.data.frame <- function(data, truth, estimate, ph, na_rm = TRUE, ...) {
 
 }
 
-ph.aux <- IRon::phi.control(solubility_test$solubility)
-sera(solubility_test, truth = solubility, estimate = prediction, ph = ph.aux)
-
-eval_metrics_regression <- metric_set(rmse, rsq, sera)
-eval_metrics_regression(solubility_test, truth=solubility, estimate=prediction, ph=ph.aux)
-
-eval_metrics_classification <- metric_set(accuracy, bal_accuracy, f_meas, precision, recall, roc_auc)
+# ph.aux <- IRon::phi.control(solubility_test$solubility)
+# sera(solubility_test, truth = solubility, estimate = prediction, ph = ph.aux)
+#
+# eval_metrics_regression <- metric_set(rmse, rsq, sera)
+# eval_metrics_regression(solubility_test, truth=solubility, estimate=prediction, ph=ph.aux)
+#
+# eval_metrics_classification <- metric_set(accuracy, bal_accuracy, f_meas, precision, recall, roc_auc)
 
 #####
 

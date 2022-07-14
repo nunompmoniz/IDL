@@ -1,51 +1,71 @@
-library(recipes)
-library(modeldata)
-data(hpc_data)
-
-hpc_data0 <- hpc_data %>%
-  select(-protocol, -day)
-
-smote_rec <- recipe(class ~ ., data = hpc_data0) %>%
-  step_SmoteClassif(class, ove.perc = 2, und.perc=0.5, neighbors = 5) %>%
-  prep()
-
-#tidy(smote_rec, number=1)
-
-training <- smote_rec %>%
-  bake(new_data = NULL)
-
-table(hpc_data0$class)
-table(training$class)
-
-folds <- vfold_cv(hpc_data0, v = 5)
-
-tune_rec <- recipe(class ~ ., data = hpc_data0) %>%
-  step_SmoteClassif(class, ove.perc = tune(), und.perc=tune(), neighbors = tune())
-
-lin_mod <-
-  decision_tree() %>%
-  set_mode("classification") %>%
-  set_engine("rpart")
-
-wf <- workflow() %>%
-  add_recipe(tune_rec) %>%
-  add_model(lin_mod)
-
-lambda_grid <- grid_random(ove.perc(),und.perc(),neighbors(),size = 9) #strange bug
-
-res <- tune_grid(wf,
-                 resamples = folds,
-                 grid = lambda_grid,
-                 metrics = eval_metrics_classification)
-
-estimates <- collect_metrics(res)
-estimates
-
-show_best(res, metric = "accuracy")
-show_best(res, metric = "bal_accuracy")
-show_best(res, metric = "roc_auc")
-show_best(res, metric = "f_meas")
-
+#' SMOTE for Imbalanced Classification Tasks
+#'
+#' @param recipe
+#' @param ...
+#' @param role
+#' @param trained
+#' @param und.perc
+#' @param ove.perc
+#' @param neighbors
+#' @param dist
+#' @param perc.list
+#' @param C.perc
+#' @param target
+#' @param skip
+#' @param id
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' library(tidymodels)
+#' library(modeldata)
+#' data(hpc_data)
+#'
+#' hpc_data0 <- hpc_data %>%
+#'   select(-protocol, -day)
+#'
+#' smote_rec <- recipe(class ~ ., data = hpc_data0) %>%
+#'   step_SmoteClassif(class, ove.perc = 2, und.perc=0.5, neighbors = 5) %>%
+#'   prep()
+#'
+#' tidy(smote_rec, number=1)
+#'
+#' training <- smote_rec %>%
+#'   bake(new_data = NULL)
+#'
+#' table(hpc_data0$class)
+#' table(training$class)
+#'
+#' folds <- vfold_cv(hpc_data0, v = 5)
+#'
+#' tune_rec <- recipe(class ~ ., data = hpc_data0) %>%
+#'   step_SmoteClassif(class, ove.perc = tune(), und.perc=tune(), neighbors = tune())
+#'
+#' lin_mod <-
+#'   decision_tree() %>%
+#'   set_mode("classification") %>%
+#'   set_engine("rpart")
+#'
+#' wf <- workflow() %>%
+#'   add_recipe(tune_rec) %>%
+#'   add_model(lin_mod)
+#'
+#' lambda_grid <- grid_random(ove.perc(),und.perc(),neighbors(),size = 9) #strange bug
+#'
+#' res <- tune_grid(wf,
+#'                  resamples = folds,
+#'                  grid = lambda_grid,
+#'                  metrics = eval_metrics_classification)
+#'
+#' estimates <- collect_metrics(res)
+#' estimates
+#'
+#' show_best(res, metric = "accuracy")
+#' show_best(res, metric = "bal_accuracy")
+#' show_best(res, metric = "roc_auc")
+#' show_best(res, metric = "f_meas")
+#'
 step_SmoteClassif <- function(
   recipe,
   ...,
@@ -113,6 +133,7 @@ step_SmoteClassif_new <-
 ######################################################################
 ######################################################################
 
+#' @export
 prep.step_SmoteClassif <- function(x, training, info = NULL, ...) {
   col_names <- recipes_eval_select(x$terms, training, info)
 
@@ -161,6 +182,7 @@ prep.step_SmoteClassif <- function(x, training, info = NULL, ...) {
 ######################################################################
 ######################################################################
 
+#' @export
 bake.step_SmoteClassif <- function(object, new_data, ...) {
 
   # UBL does not support tibbles yet
@@ -175,6 +197,7 @@ bake.step_SmoteClassif <- function(object, new_data, ...) {
 ######################################################################
 ######################################################################
 
+#' @export
 print.step_SmoteClassif <-
   function(x, width = max(20, options()$width - 30), ...) {
     cat("SMOTE on outcome variable ",x$target,": ",sep="")
@@ -194,6 +217,9 @@ print.step_SmoteClassif <-
 ######################################################################
 ######################################################################
 
+#' @rdname tidy.recipe
+#' @param x A `step_SmoteClassif` object.
+#' @export
 tidy.step_SmoteClassif <- function(x, ...) {
   res <- tibble::tibble(
     Class = names(x$C.perc),
@@ -208,6 +234,9 @@ tidy.step_SmoteClassif <- function(x, ...) {
 ######################################################################
 ######################################################################
 
+#' @rdname tune.recipe
+#' @param x A `step_SmoteClassif` object.
+#' @export
 tunable.step_SmoteClassif <- function (x, ...) {
   tibble::tibble(
     name = c("ove.perc","und.perc","neighbors"),
@@ -223,7 +252,3 @@ tunable.step_SmoteClassif <- function (x, ...) {
 ######################################################################
 ######################################################################
 ######################################################################
-
-# required_pkgs.step_SmoteClassif <- function(x, ...) {
-# c("SmoteClassif", "IDL")
-# }

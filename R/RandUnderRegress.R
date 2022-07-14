@@ -1,63 +1,71 @@
-library(recipes)
-library(modeldata)
-
-load("~/Desktop/Academia/Datasets/RegressionDatasets_FULL.RData")
-ds <- DSs[[48]]@data
-form <- DSs[[48]]@formula
-
-ds <- tibble(ds)
-
-up_rec <- recipe(shares ~ ., data = ds) %>%
-  step_RandUnderRegress(shares, und.perc = 0.5) %>%
-  prep()
-
-#tidy(up_rec, number=1)
-
-training <- up_rec %>%
-  bake(new_data = NULL)
-
-plot(density(ds$shares))
-lines(density(training$shares), col=34)
-
-folds <- vfold_cv(ds, v = 5)
-
-tune_rec <- recipe(shares ~ ., data = ds) %>%
-  step_RandUnderRegress(shares, und.perc = tune())
-
-lin_mod <-
-  decision_tree() %>%
-  set_mode("regression") %>%
-  set_engine("rpart")
-
-wf <- workflow() %>%
-  add_recipe(tune_rec) %>%
-  add_model(lin_mod)
-
-lambda_grid <- grid_random(und.perc(),size = 3)
-
-# ph.aux <- IRon::phi.control(ds$shares)
-# seraphi <- metric_tweak("seraphi", sera, ph=ph.aux)
-# aux_metrics <- metric_set(rmse, rsq, sera)
-
-res <- tune_grid(wf,
-                 resamples = folds,
-                 grid = lambda_grid,control = control_grid(save_pred=TRUE))
-                 # metrics = aux_metrics)
-
-res <- add_sera(res, form)
-
-show_best(res, metric="rmse")
-show_best(res, metric="rsq")
-show_best(res, metric="sera")
-
-# estimates <- collect_metrics(res)
-# estimates
-
-# show_best(res, metric = "rmse")
-# show_best(res, metric = "rsq")
-# show_best(res, metric = "sera")
-
-
+#' Random Undersampling for Imbalanced Regression Tasks
+#'
+#' @description
+#'
+#' @param recipe
+#' @param ...
+#' @param role
+#' @param trained
+#' @param und.perc
+#' @param perc.list
+#' @param C.perc
+#' @param threshold
+#' @param target
+#' @param skip
+#' @param id
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' library(tidymodels)
+#' library(modeldata)
+#'
+#' load("~/Desktop/Academia/Datasets/RegressionDatasets_FULL.RData")
+#' ds <- DSs[[48]]@data
+#' form <- DSs[[48]]@formula
+#'
+#' ds <- tibble(ds)
+#'
+#' up_rec <- recipe(shares ~ ., data = ds) %>%
+#'   step_RandUnderRegress(shares, und.perc = 0.5) %>%
+#'   prep()
+#'
+#' tidy(up_rec, number=1)
+#'
+#' training <- up_rec %>%
+#'   bake(new_data = NULL)
+#'
+#' plot(density(ds$shares))
+#' lines(density(training$shares), col=34)
+#'
+#' folds <- vfold_cv(ds, v = 5)
+#'
+#' tune_rec <- recipe(shares ~ ., data = ds) %>%
+#'   step_RandUnderRegress(shares, und.perc = tune())
+#'
+#' lin_mod <-
+#'   decision_tree() %>%
+#'   set_mode("regression") %>%
+#'   set_engine("rpart")
+#'
+#' wf <- workflow() %>%
+#'   add_recipe(tune_rec) %>%
+#'   add_model(lin_mod)
+#'
+#' lambda_grid <- grid_random(und.perc(),size = 3)
+#'
+#' res <- tune_grid(wf,
+#'                  resamples = folds,
+#'                  grid = lambda_grid,control = control_grid(save_pred=TRUE))
+#' # metrics = aux_metrics)
+#'
+#' res <- add_sera(res, form)
+#'
+#' show_best(res, metric="rmse")
+#' show_best(res, metric="rsq")
+#' show_best(res, metric="sera")
+#'
 step_RandUnderRegress <- function(
   recipe,
   ...,
@@ -119,6 +127,7 @@ step_RandUnderRegress_new <-
 ######################################################################
 ######################################################################
 
+#' @export
 prep.step_RandUnderRegress <- function(x, training, info = NULL, ...) {
   col_names <- recipes_eval_select(x$terms, training, info)
 
@@ -159,6 +168,7 @@ prep.step_RandUnderRegress <- function(x, training, info = NULL, ...) {
 ######################################################################
 ######################################################################
 
+#' @export
 bake.step_RandUnderRegress <- function(object, new_data, ...) {
 
   # UBL does not support tibbles yet
@@ -175,6 +185,7 @@ bake.step_RandUnderRegress <- function(object, new_data, ...) {
 ######################################################################
 ######################################################################
 
+#' @export
 print.step_RandUnderRegress <-
   function(x, width = max(20, options()$width - 30), ...) {
     cat("Random Undersampling on outcome variable ",x$target,": ",sep="")
@@ -194,6 +205,9 @@ print.step_RandUnderRegress <-
 ######################################################################
 ######################################################################
 
+#' @rdname tidy.recipe
+#' @param x A `step_RandUnderRegress` object.
+#' @export
 tidy.step_RandUnderRegress <- function(x, ...) {
   res <- tibble::tibble(
     Threshold = x$threshold,
@@ -208,6 +222,9 @@ tidy.step_RandUnderRegress <- function(x, ...) {
 ######################################################################
 ######################################################################
 
+#' @rdname tune.recipe
+#' @param x A `step_RandUnderRegress` object.
+#' @export
 tunable.step_RandUnderRegress <- function (x, ...) {
   tibble::tibble(
     name = c("und.perc"),
@@ -222,6 +239,8 @@ tunable.step_RandUnderRegress <- function (x, ...) {
 ######################################################################
 ######################################################################
 
-# required_pkgs.step_RandUnderRegress <- function(x, ...) {
-# c("RandUnderRegress", "IDL")
-# }
+#' @rdname required_pkgs.step
+#' @export
+required_pkgs.step_RandUnderRegress <- function(x, ...) {
+  c("UBL", "IDL")
+}

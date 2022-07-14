@@ -1,3 +1,4 @@
+#' @export
 stdSMOTE <- function(form,dat,perc.o,thr,k,calcPhi=TRUE) {
 
   require(UBL)

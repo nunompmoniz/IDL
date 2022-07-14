@@ -1,52 +1,6 @@
-library(tidymodels)
-library(modeldata)
-data(hpc_data)
-
-hpc_data0 <- hpc_data %>%
-  select(-protocol, -day)
-
-down_rec <- recipe(class ~ ., data = hpc_data0) %>%
-  step_RandOverClassif(class, ove.perc = 2) %>%
-  prep()
-
-tidy(down_rec, number=1)
-
-training <- down_rec %>%
-  bake(new_data = NULL)
-
-table(hpc_data0$class)
-table(training$class)
-
-folds <- vfold_cv(hpc_data0, v = 5)
-
-tune_rec <- recipe(class ~ ., data = hpc_data0) %>%
-  step_RandOverClassif(class, ove.perc = tune())
-
-lin_mod <-
-  decision_tree() %>%
-  set_mode("classification") %>%
-  set_engine("rpart")
-
-wf <- workflow() %>%
-  add_recipe(tune_rec) %>%
-  add_model(lin_mod)
-
-lambda_grid <- grid_random(ove.perc(),size = 3) #strange bug
-
-res <- tune_grid(wf,
-                 resamples = folds,
-                 grid = lambda_grid,
-                 metrics = eval_metrics_classification)
-
-estimates <- collect_metrics(res)
-estimates
-
-show_best(res, metric = "accuracy")
-show_best(res, metric = "bal_accuracy")
-show_best(res, metric = "roc_auc")
-show_best(res, metric = "f_meas")
-
-#' Title
+#' Random Oversampling for Imbalanced Classification Tasks
+#'
+#' @description dsa dsa
 #'
 #' @param recipe
 #' @param ...
@@ -63,6 +17,55 @@ show_best(res, metric = "f_meas")
 #' @export
 #'
 #' @examples
+#' library(tidymodels)
+#' library(modeldata)
+#'
+#' data(hpc_data)
+#'
+#' hpc_data0 <- hpc_data %>%
+#'   select(-protocol, -day)
+#'
+#' down_rec <- recipe(class ~ ., data = hpc_data0) %>%
+#'   step_RandOverClassif(class, ove.perc = 2) %>%
+#'   prep()
+#'
+#' tidy(down_rec, number=1)
+#'
+#' training <- down_rec %>%
+#'   bake(new_data = NULL)
+#'
+#' table(hpc_data0$class)
+#' table(training$class)
+#'
+#' folds <- vfold_cv(hpc_data0, v = 5)
+#'
+#' tune_rec <- recipe(class ~ ., data = hpc_data0) %>%
+#'   step_RandOverClassif(class, ove.perc = tune())
+#'
+#' lin_mod <-
+#'   decision_tree() %>%
+#'   set_mode("classification") %>%
+#'   set_engine("rpart")
+#'
+#' wf <- workflow() %>%
+#'   add_recipe(tune_rec) %>%
+#'   add_model(lin_mod)
+#'
+#' lambda_grid <- grid_random(ove.perc(),size = 3) #strange bug
+#'
+#' res <- tune_grid(wf,
+#'                  resamples = folds,
+#'                  grid = lambda_grid,
+#'                  metrics = eval_metrics_classification)
+#'
+#' estimates <- collect_metrics(res)
+#' estimates
+#'
+#' show_best(res, metric = "accuracy")
+#' show_best(res, metric = "bal_accuracy")
+#' show_best(res, metric = "roc_auc")
+#' show_best(res, metric = "f_meas")
+#'
 step_RandOverClassif <- function(
   recipe,
   ...,
