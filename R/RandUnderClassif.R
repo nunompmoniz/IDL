@@ -1,4 +1,4 @@
-#' Random Undersampling for Imbalanced Classification Tasks
+#' @title Random Undersampling for Imbalanced Classification Tasks
 #'
 #' @param recipe
 #' @param ...
@@ -11,12 +11,15 @@
 #' @param skip
 #' @param id
 #'
+#' @importFrom recipes prep bake required_pkgs
+#'
 #' @return
 #' @export
 #'
 #' @examples
 #' library(tidymodels)
 #' library(modeldata)
+#' library(IDL)
 #' data(hpc_data)
 #'
 #' hpc_data0 <- hpc_data %>%
@@ -123,6 +126,9 @@ step_RandUnderClassif_new <-
 
 #' @export
 prep.step_RandUnderClassif <- function(x, training, info = NULL, ...) {
+
+  print("3")
+
   col_names <- recipes_eval_select(x$terms, training, info)
 
   #print(col_names)
@@ -138,7 +144,7 @@ prep.step_RandUnderClassif <- function(x, training, info = NULL, ...) {
 
   # else, assume that the perc is for the most under-represented class
 
-  cls <- training %>% select(col_names) %>% table() %>% sort(decreasing=TRUE) %>% names() %>% first()
+  cls <- training %>% select(all_of(col_names)) %>% table() %>% sort(decreasing=TRUE) %>% names() %>% first()
   C.perc <- NULL
   C.perc[[cls]] <- x$und.perc
   # print(C.perc)
@@ -150,7 +156,7 @@ prep.step_RandUnderClassif <- function(x, training, info = NULL, ...) {
     und.perc = x$und.perc,
     perc.list = x$perc.list,
     C.perc = C.perc,
-    target = col_names,
+    target = all_of(col_names),
     skip = x$skip,
     id = x$id
   )
@@ -163,6 +169,8 @@ prep.step_RandUnderClassif <- function(x, training, info = NULL, ...) {
 
 #' @export
 bake.step_RandUnderClassif <- function(object, new_data, ...) {
+
+  print("4")
 
   # UBL does not support tibbles yet
   new_data <- UBL::RandUnderClassif(form = formula(paste0(object$target,"~ .")), dat = as.data.frame(new_data), C.perc = object$C.perc)

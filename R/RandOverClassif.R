@@ -2,16 +2,18 @@
 #'
 #' @description dsa dsa
 #'
-#' @param recipe
-#' @param ...
-#' @param role
+#' @param recipe Recipe object
+#' @param ... Other parameters
+#' @param role Not used by this step since no new variables are created.
 #' @param trained
-#' @param ove.perc
-#' @param perc.list
-#' @param C.perc
-#' @param target
-#' @param skip
-#' @param id
+#' @param ove.perc Oversampling percentage
+#' @param perc.list Oversampling percentage list describing the values for each class
+#' @param C.perc Final list of percentages
+#' @param target Name of the target variable
+#' @param skip dsa
+#' @param id dsa
+#'
+#' @importFrom recipes prep bake required_pkgs
 #'
 #' @return
 #' @export

@@ -1,11 +1,15 @@
 Package: IDL
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Methods for Imbalanced Learning Tasks
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Authors@R: c(person("Nuno", "Moniz", email = "nmmoniz@inesctec.pt",
+                                        role = c("cre","aut")),
+           person("Rita", "P. Ribeiro", email = "rpribeiro@dcc.fc.up.pt",
+                                        role = "aut"))
+Maintainer: Nuno Moniz <nuno.moniz@nd.edu>
+Description: Blada blada blada yada yada
+License: CC0
 Encoding: UTF-8
 LazyData: true
+Imports: tidymodels, yardstick, recipes
+RoxygenNote: 7.1.1
